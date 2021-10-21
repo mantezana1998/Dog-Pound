@@ -1,27 +1,60 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView
+from .models import Dog, Toy
+from .forms import FeedingForm
 
-#Add the following import
-from django.http import HttpResponse
+class DogCreate(CreateView):
+  model = Dog
+  fields = ['name', 'breed', 'description', 'age']  
 
-# Add the Cat class & list and view function below the imports
-class Friend:  # Note that parens are optional if not inheriting from another class
-  def __init__(self, name, breed, description, age):
-    self.name = name
-    self.breed = breed
-    self.description = description
-    self.age = age
+class DogUpdate(UpdateView):
+  model = Dog
+  fields = ['breed', 'description', 'age']
 
-friends = [
-  Friend('Tyson', 'Lab', 'Very energetic dog who loves you', 15),
-  Friend('Tabby', 'Tortoise shell', 'Four little black monster that will attack your feet', 0),
-  Friend('Leah', 'Mini Pinsch', 'Golden Dark Brown Queen', 4)
-]
+class DogDelete(DeleteView):
+  model = Dog
+  success_url = '/dogs/'
 
 def home(request):
-    return HttpResponse('<h1>Hello /ᐠ｡‸｡ᐟ\ﾉ</h1>')
+  return render(request, 'home.html')
 
 def about(request):
-    return render(request, 'about.html')
+  return render(request, 'about.html')
 
-def friends_index(request):
-    return render(request, 'friends/index.html', {'friends': friends})
+def dogs_index(request):
+  dogs = Dog.objects.all()
+  return render(request, 'dogs/index.html', {'dogs': dogs})
+
+def dogs_detail(request, dog_id):
+  dog = Dog.objects.get(id=dog_id)
+  feeding_form = FeedingForm()
+  return render(request, 'dogs/detail.html', {
+    'dog': dog, 'feeding_form': feeding_form
+  })
+
+def add_feeding(request, dog_id):
+  form = FeedingForm(request.POST)
+  if form.is_valid():
+    new_feeding = form.save(commit=False)
+    new_feeding.dog_id = dog_id
+    new_feeding.save()
+  return redirect('detail', dog_id=dog_id)
+
+class ToyList(ListView):
+      model = Toy
+
+class ToyDetail(DetailView):
+  model = Toy
+
+class ToyCreate(CreateView):
+  model = Toy
+  fields = '__all__'
+
+class ToyUpdate(UpdateView):
+  model = Toy
+  fields = ['name', 'color']
+
+class ToyDelete(DeleteView):
+  model = Toy
+  success_url = '/toys/'
